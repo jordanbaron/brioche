@@ -31,9 +31,9 @@ export default function MarkdownEditor({
   });
 
   useEffect(() => {
-    if (editor && content) {
+    if (editor) {
       isExternalUpdate.current = true;
-      editor.commands.setContent(content);
+      editor.commands.setContent(content || "<p>Markdown output will appear here...</p>");
       isExternalUpdate.current = false;
     }
   }, [editor, content]);

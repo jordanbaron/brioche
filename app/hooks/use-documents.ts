@@ -10,6 +10,10 @@ export function useDocuments() {
     await db.documents.delete(id);
   };
 
+  const deleteDocuments = async (ids: number[]) => {
+    await db.documents.bulkDelete(ids);
+  };
+
   const getDocument = async (id: number) => {
     return await db.documents.get(id);
   };
@@ -22,6 +26,7 @@ export function useDocuments() {
     documents,
     isLoading: documents === undefined,
     deleteDocument,
+    deleteDocuments,
     getDocument,
     updateMarkdown,
   };
