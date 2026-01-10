@@ -2,9 +2,17 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
-export default function MarkdownEditor({ content }: { content: string }) {
+export default function MarkdownEditor({
+  content,
+  onContentChange,
+}: {
+  content: string;
+  onContentChange?: (content: string) => void;
+}) {
+  const isExternalUpdate = useRef(false);
+
   const editor = useEditor({
     extensions: [StarterKit],
     content: content || "<p>Markdown output will appear here...</p>",
@@ -15,16 +23,23 @@ export default function MarkdownEditor({ content }: { content: string }) {
       },
     },
     immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      if (!isExternalUpdate.current && onContentChange) {
+        onContentChange(editor.getText());
+      }
+    },
   });
 
   useEffect(() => {
     if (editor && content) {
+      isExternalUpdate.current = true;
       editor.commands.setContent(content);
+      isExternalUpdate.current = false;
     }
   }, [editor, content]);
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
         Markdown Output
       </h2>
