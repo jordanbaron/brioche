@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useImmer } from "use-immer";
-import { useOcr } from "../../hooks/use-ocr";
+import { useOcr, type OcrResult } from "../../hooks/use-ocr";
 import Spinner from "../spinner";
 import Dropzone from "./dropzone";
 import ImagePreview from "./image-preview";
@@ -25,55 +25,58 @@ export default function DocumentUpload({
   const currentImage = images[currentIndex];
 
   const ocr = useOcr({
-    onSuccess: (markdown, documentId) => {
+    onSuccess: (result: OcrResult) => {
       setImages((draft) => {
-        draft[currentIndex].status = "processed";
-        draft[currentIndex].markdown = markdown;
-        draft[currentIndex].documentId = documentId;
+        for (const page of result.pages) {
+          if (draft[page.index]) {
+            draft[page.index].markdown = page.markdown;
+            draft[page.index].documentId = result.documentIds[page.index];
+          }
+        }
       });
-      onMarkdownGenerated(markdown);
+      if (result.pages.length > 0) {
+        const firstPage = result.pages.find((p) => p.index === 0);
+        if (firstPage) {
+          onMarkdownGenerated(firstPage.markdown);
+        }
+      }
     },
   });
 
   useEffect(() => {
-    if (currentImage?.status === "processed" && currentImage.markdown) {
+    if (currentImage?.markdown) {
       onMarkdownChange?.(currentImage.markdown);
-    } else if (currentImage?.status === "pending") {
+    } else {
       onMarkdownChange?.("");
     }
   }, [currentIndex, currentImage, onMarkdownChange]);
 
-  const handleFiles = useCallback((files: FileList) => {
-    const validFiles: ImageItem[] = [];
+  const handleFiles = useCallback(
+    (files: FileList) => {
+      const validFiles: ImageItem[] = [];
 
-    Array.from(files).forEach((file) => {
-      if (file.type.startsWith("image/")) {
-        const previewUrl = URL.createObjectURL(file);
-        validFiles.push({
-          file,
-          previewUrl,
-          status: "pending",
-        });
+      Array.from(files).forEach((file) => {
+        if (file.type.startsWith("image/")) {
+          const previewUrl = URL.createObjectURL(file);
+          validFiles.push({ file, previewUrl });
+        }
+      });
+
+      if (validFiles.length === 0) {
+        alert("Please upload image files");
+        return;
       }
-    });
 
-    if (validFiles.length === 0) {
-      alert("Please upload image files");
-      return;
-    }
-
-    setImages(validFiles);
-    setCurrentIndex(0);
-  }, [setImages]);
+      setImages(validFiles);
+      setCurrentIndex(0);
+    },
+    [setImages]
+  );
 
   const handleProcess = useCallback(() => {
-    if (currentImage && currentImage.status === "pending") {
-      setImages((draft) => {
-        draft[currentIndex].status = "processing";
-      });
-      ocr.process(currentImage.file);
-    }
-  }, [currentImage, currentIndex, ocr, setImages]);
+    const files = images.map((img) => img.file);
+    ocr.process(files);
+  }, [images, ocr]);
 
   const handleClear = useCallback(() => {
     images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
@@ -91,37 +94,49 @@ export default function DocumentUpload({
     setCurrentIndex((prev) => Math.min(images.length - 1, prev + 1));
   }, [images.length]);
 
+  const handleRemove = useCallback(() => {
+    URL.revokeObjectURL(images[currentIndex].previewUrl);
+    setImages((draft) => {
+      draft.splice(currentIndex, 1);
+    });
+    setCurrentIndex((prev) => Math.min(prev, images.length - 2));
+  }, [currentIndex, images, setImages]);
+
   const handleEdit = useCallback(() => {
     if (currentImage) {
       setEditingImageUrl(currentImage.previewUrl);
     }
   }, [currentImage]);
 
-  const handleEditorSave = useCallback((blob: Blob) => {
-    const oldUrl = images[currentIndex].previewUrl;
-    URL.revokeObjectURL(oldUrl);
+  const handleEditorSave = useCallback(
+    (blob: Blob) => {
+      const oldUrl = images[currentIndex].previewUrl;
+      URL.revokeObjectURL(oldUrl);
 
-    const newUrl = URL.createObjectURL(blob);
-    const newFile = new File([blob], images[currentIndex].file.name, { type: "image/png" });
+      const newUrl = URL.createObjectURL(blob);
+      const newFile = new File([blob], images[currentIndex].file.name, {
+        type: "image/png",
+      });
 
-    setImages((draft) => {
-      draft[currentIndex].file = newFile;
-      draft[currentIndex].previewUrl = newUrl;
-    });
-  }, [currentIndex, images, setImages]);
+      setImages((draft) => {
+        draft[currentIndex].file = newFile;
+        draft[currentIndex].previewUrl = newUrl;
+      });
+    },
+    [currentIndex, images, setImages]
+  );
 
   const handleEditorClose = useCallback(() => {
     setEditingImageUrl(null);
   }, []);
 
-  const isProcessing = currentImage?.status === "processing";
-  const isPending = currentImage?.status === "pending";
+  const isProcessing = ocr.isPending;
+  const isProcessed = images.length > 0 && images.every((img) => img.markdown);
+  const canProcess = images.length > 0 && !isProcessed && !isProcessing;
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <h2 className="text-lg font-semibold text-foreground">
-        Upload Document
-      </h2>
+      <h2 className="text-lg font-semibold text-foreground">Upload Document</h2>
 
       {currentImage ? (
         <ImagePreview
@@ -131,18 +146,20 @@ export default function DocumentUpload({
           onPrev={handlePrev}
           onNext={handleNext}
           onEdit={handleEdit}
+          onRemove={handleRemove}
+          disabled={isProcessing}
         />
       ) : (
         <Dropzone onFiles={handleFiles} />
       )}
 
-      {images.length > 0 && isPending && !isProcessing && (
+      {canProcess && (
         <div className="flex gap-2">
           <button
             onClick={handleProcess}
             className="flex-1 rounded-lg bg-accent-strong px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent"
           >
-            Process with OCR
+            Process {images.length} image{images.length > 1 ? "s" : ""} with OCR
           </button>
           <button
             onClick={handleClear}
@@ -153,7 +170,7 @@ export default function DocumentUpload({
         </div>
       )}
 
-      {images.length > 0 && !isPending && !isProcessing && (
+      {isProcessed && (
         <button
           onClick={handleClear}
           className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
@@ -165,14 +182,12 @@ export default function DocumentUpload({
       {isProcessing && (
         <div className="flex items-center gap-2 text-sm text-foreground-muted">
           <Spinner />
-          Processing with Mistral OCR...
+          Processing {images.length} image{images.length > 1 ? "s" : ""}
         </div>
       )}
 
       {ocr.isError && (
-        <div className="text-sm text-red-500">
-          Error: {ocr.error?.message}
-        </div>
+        <div className="text-sm text-red-500">Error: {ocr.error?.message}</div>
       )}
 
       <ImageEditorModal

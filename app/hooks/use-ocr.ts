@@ -1,14 +1,24 @@
 import { useMutation } from "@tanstack/react-query";
 import { db } from "../lib/db";
 
+export interface OcrPage {
+  index: number;
+  markdown: string;
+}
+
+export interface OcrResult {
+  pages: OcrPage[];
+  documentIds: number[];
+}
+
 interface UseOcrOptions {
-  onSuccess?: (markdown: string, documentId: number) => void;
+  onSuccess?: (result: OcrResult) => void;
   onError?: (error: Error) => void;
 }
 
-async function processOcr(file: File): Promise<string> {
+async function processOcr(files: File[]): Promise<OcrPage[]> {
   const formData = new FormData();
-  formData.append("file", file);
+  files.forEach((file) => formData.append("files", file));
 
   const response = await fetch("/api/ocr", {
     method: "POST",
@@ -21,29 +31,42 @@ async function processOcr(file: File): Promise<string> {
   }
 
   const data = await response.json();
-  return data.markdown;
+  return data.pages;
 }
 
-async function saveDocument(file: File, markdown: string): Promise<number> {
-  return await db.documents.add({
-    title: file.name.replace(/\.[^/.]+$/, ""),
-    blob: file,
-    mimeType: file.type,
-    size: file.size,
-    markdown,
-    uploadedAt: new Date(),
-  });
+async function saveDocuments(
+  files: File[],
+  pages: OcrPage[]
+): Promise<number[]> {
+  const documentIds: number[] = [];
+
+  for (const page of pages) {
+    const file = files[page.index];
+    if (!file) continue;
+
+    const id = await db.documents.add({
+      title: file.name.replace(/\.[^/.]+$/, ""),
+      blob: file,
+      mimeType: file.type,
+      size: file.size,
+      markdown: page.markdown,
+      uploadedAt: new Date(),
+    });
+    documentIds[page.index] = id;
+  }
+
+  return documentIds;
 }
 
 export function useOcr(options: UseOcrOptions = {}) {
   const mutation = useMutation({
-    mutationFn: async (file: File) => {
-      const markdown = await processOcr(file);
-      const documentId = await saveDocument(file, markdown);
-      return { markdown, documentId };
+    mutationFn: async (files: File[]) => {
+      const pages = await processOcr(files);
+      const documentIds = await saveDocuments(files, pages);
+      return { pages, documentIds };
     },
-    onSuccess: ({ markdown, documentId }) => {
-      options.onSuccess?.(markdown, documentId);
+    onSuccess: (result) => {
+      options.onSuccess?.(result);
     },
     onError: (error: Error) => {
       options.onError?.(error);
