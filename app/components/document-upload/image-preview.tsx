@@ -40,14 +40,14 @@ export default function ImagePreview({
           <button
             onClick={onPrev}
             disabled={currentIndex === 0}
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition-opacity hover:bg-black/70 disabled:opacity-30"
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-accent-strong/70 p-2 text-white transition-colors hover:bg-accent-strong disabled:opacity-30"
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </button>
           <button
             onClick={onNext}
             disabled={currentIndex === totalImages - 1}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition-opacity hover:bg-black/70 disabled:opacity-30"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-accent-strong/70 p-2 text-white transition-colors hover:bg-accent-strong disabled:opacity-30"
           >
             <ChevronRightIcon className="h-5 w-5" />
           </button>
@@ -55,7 +55,7 @@ export default function ImagePreview({
       )}
 
       {totalImages > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-accent-strong/70 px-3 py-1 text-xs text-white">
           {currentIndex + 1} of {totalImages}
         </div>
       )}
@@ -63,7 +63,7 @@ export default function ImagePreview({
       {canEdit && (
         <button
           onClick={onEdit}
-          className="absolute left-2 top-2 rounded-full bg-black/50 p-2 text-white transition-opacity hover:bg-black/70"
+          className="absolute left-2 top-2 rounded-full bg-accent-strong/70 p-2 text-white transition-colors hover:bg-accent-strong"
           title="Edit image"
         >
           <PencilSquareIcon className="h-4 w-4" />
@@ -73,7 +73,7 @@ export default function ImagePreview({
       {!disabled && (
         <button
           onClick={onRemove}
-          className="absolute right-2 top-2 rounded-full bg-black/50 p-2 text-white transition-opacity hover:bg-red-500"
+          className="absolute right-2 top-2 rounded-full bg-accent-strong/70 p-2 text-white transition-colors hover:bg-accent-strong"
           title="Remove image"
         >
           <XMarkIcon className="h-4 w-4" />
