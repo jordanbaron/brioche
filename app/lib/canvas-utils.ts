@@ -30,30 +30,23 @@ export function drawCropOverlay(
   // Darken outside crop area
   ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
   ctx.fillRect(0, 0, canvas.width, cropArea.y);
-  ctx.fillRect(0, cropArea.y + cropArea.height, canvas.width, canvas.height - cropArea.y - cropArea.height);
+  ctx.fillRect(
+    0,
+    cropArea.y + cropArea.height,
+    canvas.width,
+    canvas.height - cropArea.y - cropArea.height
+  );
   ctx.fillRect(0, cropArea.y, cropArea.x, cropArea.height);
-  ctx.fillRect(cropArea.x + cropArea.width, cropArea.y, canvas.width - cropArea.x - cropArea.width, cropArea.height);
+  ctx.fillRect(
+    cropArea.x + cropArea.width,
+    cropArea.y,
+    canvas.width - cropArea.x - cropArea.width,
+    cropArea.height
+  );
 
   // White border
   ctx.strokeStyle = "white";
   ctx.lineWidth = 2;
-  ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
-
-  // Grid lines (rule of thirds)
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-  ctx.lineWidth = 1;
-  const thirdW = cropArea.width / 3;
-  const thirdH = cropArea.height / 3;
-  ctx.beginPath();
-  ctx.moveTo(cropArea.x + thirdW, cropArea.y);
-  ctx.lineTo(cropArea.x + thirdW, cropArea.y + cropArea.height);
-  ctx.moveTo(cropArea.x + thirdW * 2, cropArea.y);
-  ctx.lineTo(cropArea.x + thirdW * 2, cropArea.y + cropArea.height);
-  ctx.moveTo(cropArea.x, cropArea.y + thirdH);
-  ctx.lineTo(cropArea.x + cropArea.width, cropArea.y + thirdH);
-  ctx.moveTo(cropArea.x, cropArea.y + thirdH * 2);
-  ctx.lineTo(cropArea.x + cropArea.width, cropArea.y + thirdH * 2);
-  ctx.stroke();
 
   // Corner handles
   ctx.fillStyle = "white";
@@ -74,12 +67,32 @@ export function drawCropOverlay(
   const barThickness = 4;
 
   // Top and bottom bars
-  ctx.fillRect(cropArea.x + cropArea.width / 2 - barLength / 2, cropArea.y - barThickness / 2, barLength, barThickness);
-  ctx.fillRect(cropArea.x + cropArea.width / 2 - barLength / 2, cropArea.y + cropArea.height - barThickness / 2, barLength, barThickness);
+  ctx.fillRect(
+    cropArea.x + cropArea.width / 2 - barLength / 2,
+    cropArea.y - barThickness / 2,
+    barLength,
+    barThickness
+  );
+  ctx.fillRect(
+    cropArea.x + cropArea.width / 2 - barLength / 2,
+    cropArea.y + cropArea.height - barThickness / 2,
+    barLength,
+    barThickness
+  );
 
   // Left and right bars
-  ctx.fillRect(cropArea.x - barThickness / 2, cropArea.y + cropArea.height / 2 - barLength / 2, barThickness, barLength);
-  ctx.fillRect(cropArea.x + cropArea.width - barThickness / 2, cropArea.y + cropArea.height / 2 - barLength / 2, barThickness, barLength);
+  ctx.fillRect(
+    cropArea.x - barThickness / 2,
+    cropArea.y + cropArea.height / 2 - barLength / 2,
+    barThickness,
+    barLength
+  );
+  ctx.fillRect(
+    cropArea.x + cropArea.width - barThickness / 2,
+    cropArea.y + cropArea.height / 2 - barLength / 2,
+    barThickness,
+    barLength
+  );
 }
 
 export function getRotatedDimensions(
@@ -99,7 +112,11 @@ export function calculateScale(
   containerWidth: number,
   containerHeight: number
 ): number {
-  return Math.min(1, containerWidth / imageWidth, containerHeight / imageHeight);
+  return Math.min(
+    1,
+    containerWidth / imageWidth,
+    containerHeight / imageHeight
+  );
 }
 
 export async function exportEditedImage(
@@ -108,7 +125,10 @@ export async function exportEditedImage(
   cropArea: CropArea | null,
   scale: number
 ): Promise<Blob> {
-  const { width: finalWidth, height: finalHeight } = getRotatedDimensions(image, rotation);
+  const { width: finalWidth, height: finalHeight } = getRotatedDimensions(
+    image,
+    rotation
+  );
 
   // Create rotated image at full resolution
   const rotatedCanvas = document.createElement("canvas");
@@ -135,7 +155,17 @@ export async function exportEditedImage(
 
     exportCanvas.width = cropW;
     exportCanvas.height = cropH;
-    ctx.drawImage(rotatedCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    ctx.drawImage(
+      rotatedCanvas,
+      cropX,
+      cropY,
+      cropW,
+      cropH,
+      0,
+      0,
+      cropW,
+      cropH
+    );
   } else {
     exportCanvas.width = finalWidth;
     exportCanvas.height = finalHeight;

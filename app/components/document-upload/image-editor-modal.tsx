@@ -1,42 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import {
-  ArrowUturnLeftIcon,
-  ArrowUturnRightIcon,
-  XMarkIcon,
-  ScissorsIcon,
-} from "@heroicons/react/24/outline";
-import {
-  type CropArea,
-  drawRotatedImage,
-  drawCropOverlay,
-  getRotatedDimensions,
-  calculateScale,
-  exportEditedImage,
-} from "../../lib/canvas-utils";
-
-type DragHandle =
-  | "move"
-  | "top"
-  | "bottom"
-  | "left"
-  | "right"
-  | "top-left"
-  | "top-right"
-  | "bottom-left"
-  | "bottom-right"
-  | null;
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import EditorToolbar from "./editor-toolbar";
+import { useImageEditor } from "./hooks/use-image-editor";
+import { useCropInteraction } from "./hooks/use-crop-interaction";
+import { useCanvasRenderer } from "./hooks/use-canvas-renderer";
+import { exportEditedImage } from "../../lib/canvas-utils";
 
 interface ImageEditorModalProps {
   imageUrl: string | null;
   onSave: (blob: Blob) => void;
   onClose: () => void;
 }
-
-const HANDLE_SIZE = 20;
-const MIN_CROP_SIZE = 50;
 
 export default function ImageEditorModal({
   imageUrl,
@@ -45,117 +22,50 @@ export default function ImageEditorModal({
 }: ImageEditorModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [rotation, setRotation] = useState(0);
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
-  const [cropMode, setCropMode] = useState(false);
-  const [cropArea, setCropArea] = useState<CropArea | null>(null);
-  const [activeHandle, setActiveHandle] = useState<DragHandle>(null);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0, crop: null as CropArea | null });
-  const [scale, setScale] = useState(1);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
+  const { state: editorState, actions: editorActions, cropScaleRef } = useImageEditor();
+  const { state: cropState, actions: cropActions } = useCropInteraction();
+
+  // Load image when URL changes
   useEffect(() => {
     if (!imageUrl) {
-      setRotation(0);
-      setImage(null);
-      setCropMode(false);
-      setCropArea(null);
+      editorActions.reset();
+      editorActions.setImage(null);
       return;
     }
 
     const img = new Image();
-    img.onload = () => setImage(img);
+    img.onload = () => editorActions.setImage(img);
     img.src = imageUrl;
-  }, [imageUrl]);
+  }, [imageUrl, editorActions]);
 
-  useEffect(() => {
-    if (!image || !canvasRef.current || !containerRef.current) return;
+  // Canvas rendering
+  useCanvasRenderer({
+    canvasRef,
+    containerRef,
+    image: editorState.image,
+    rotation: editorState.rotation,
+    cropArea: editorState.cropArea,
+    cropMode: editorState.cropMode,
+    cropScale: cropScaleRef.current,
+    onScaleChange: editorActions.setScale,
+    onCanvasSizeChange: editorActions.setCanvasSize,
+  });
 
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const { width: imgWidth, height: imgHeight } = getRotatedDimensions(image, rotation);
-    const containerRect = container.getBoundingClientRect();
-    const newScale = calculateScale(imgWidth, imgHeight, containerRect.width - 32, containerRect.height - 32);
-    setScale(newScale);
-
-    const newCanvasWidth = imgWidth * newScale;
-    const newCanvasHeight = imgHeight * newScale;
-    canvas.width = newCanvasWidth;
-    canvas.height = newCanvasHeight;
-    setCanvasSize({ width: newCanvasWidth, height: newCanvasHeight });
-
-    drawRotatedImage(ctx, image, rotation, newScale);
-
-    if (cropArea && cropMode) {
-      drawCropOverlay(ctx, cropArea);
-    }
-  }, [image, rotation, cropArea, cropMode]);
-
-  const getHandle = useCallback(
-    (x: number, y: number): DragHandle => {
-      if (!cropArea) return null;
-
-      const { x: cx, y: cy, width: cw, height: ch } = cropArea;
-
-      // Check corners first
-      if (Math.abs(x - cx) < HANDLE_SIZE && Math.abs(y - cy) < HANDLE_SIZE) return "top-left";
-      if (Math.abs(x - (cx + cw)) < HANDLE_SIZE && Math.abs(y - cy) < HANDLE_SIZE) return "top-right";
-      if (Math.abs(x - cx) < HANDLE_SIZE && Math.abs(y - (cy + ch)) < HANDLE_SIZE) return "bottom-left";
-      if (Math.abs(x - (cx + cw)) < HANDLE_SIZE && Math.abs(y - (cy + ch)) < HANDLE_SIZE) return "bottom-right";
-
-      // Check edges
-      if (Math.abs(y - cy) < HANDLE_SIZE && x > cx && x < cx + cw) return "top";
-      if (Math.abs(y - (cy + ch)) < HANDLE_SIZE && x > cx && x < cx + cw) return "bottom";
-      if (Math.abs(x - cx) < HANDLE_SIZE && y > cy && y < cy + ch) return "left";
-      if (Math.abs(x - (cx + cw)) < HANDLE_SIZE && y > cy && y < cy + ch) return "right";
-
-      // Check inside for move
-      if (x > cx && x < cx + cw && y > cy && y < cy + ch) return "move";
-
-      return null;
-    },
-    [cropArea]
-  );
-
-  const getCursor = useCallback((handle: DragHandle): string => {
-    switch (handle) {
-      case "top":
-      case "bottom":
-        return "ns-resize";
-      case "left":
-      case "right":
-        return "ew-resize";
-      case "top-left":
-      case "bottom-right":
-        return "nwse-resize";
-      case "top-right":
-      case "bottom-left":
-        return "nesw-resize";
-      case "move":
-        return "move";
-      default:
-        return "default";
-    }
-  }, []);
-
+  // Mouse event handlers
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (!cropMode || !canvasRef.current || !cropArea) return;
+      if (!editorState.cropMode || !canvasRef.current || !editorState.cropArea) return;
 
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const scaleX = canvasRef.current.width / rect.width;
+      const scaleY = canvasRef.current.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
 
-      const handle = getHandle(x, y);
-      if (handle) {
-        setActiveHandle(handle);
-        setDragStart({ x, y, crop: { ...cropArea } });
-      }
+      cropActions.startDrag(x, y, editorState.cropArea);
     },
-    [cropMode, cropArea, getHandle]
+    [editorState.cropMode, editorState.cropArea, cropActions]
   );
 
   const handleMouseMove = useCallback(
@@ -163,121 +73,47 @@ export default function ImageEditorModal({
       if (!canvasRef.current) return;
 
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const scaleX = canvasRef.current.width / rect.width;
+      const scaleY = canvasRef.current.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
 
-      if (!activeHandle || !dragStart.crop) {
-        if (cropMode && cropArea) {
-          const handle = getHandle(x, y);
-          canvasRef.current.style.cursor = getCursor(handle);
+      if (!cropState.activeHandle) {
+        if (editorState.cropMode && editorState.cropArea) {
+          const handle = cropActions.getHandle(x, y, editorState.cropArea);
+          canvasRef.current.style.cursor = cropActions.getCursor(handle);
         }
         return;
       }
 
-      const dx = x - dragStart.x;
-      const dy = y - dragStart.y;
-      const { x: ox, y: oy, width: ow, height: oh } = dragStart.crop;
-
-      let newX = ox;
-      let newY = oy;
-      let newW = ow;
-      let newH = oh;
-
-      switch (activeHandle) {
-        case "move":
-          newX = Math.max(0, Math.min(canvasSize.width - ow, ox + dx));
-          newY = Math.max(0, Math.min(canvasSize.height - oh, oy + dy));
-          break;
-        case "top":
-          newY = Math.max(0, Math.min(oy + oh - MIN_CROP_SIZE, oy + dy));
-          newH = oh - (newY - oy);
-          break;
-        case "bottom":
-          newH = Math.max(MIN_CROP_SIZE, Math.min(canvasSize.height - oy, oh + dy));
-          break;
-        case "left":
-          newX = Math.max(0, Math.min(ox + ow - MIN_CROP_SIZE, ox + dx));
-          newW = ow - (newX - ox);
-          break;
-        case "right":
-          newW = Math.max(MIN_CROP_SIZE, Math.min(canvasSize.width - ox, ow + dx));
-          break;
-        case "top-left":
-          newX = Math.max(0, Math.min(ox + ow - MIN_CROP_SIZE, ox + dx));
-          newY = Math.max(0, Math.min(oy + oh - MIN_CROP_SIZE, oy + dy));
-          newW = ow - (newX - ox);
-          newH = oh - (newY - oy);
-          break;
-        case "top-right":
-          newY = Math.max(0, Math.min(oy + oh - MIN_CROP_SIZE, oy + dy));
-          newW = Math.max(MIN_CROP_SIZE, Math.min(canvasSize.width - ox, ow + dx));
-          newH = oh - (newY - oy);
-          break;
-        case "bottom-left":
-          newX = Math.max(0, Math.min(ox + ow - MIN_CROP_SIZE, ox + dx));
-          newW = ow - (newX - ox);
-          newH = Math.max(MIN_CROP_SIZE, Math.min(canvasSize.height - oy, oh + dy));
-          break;
-        case "bottom-right":
-          newW = Math.max(MIN_CROP_SIZE, Math.min(canvasSize.width - ox, ow + dx));
-          newH = Math.max(MIN_CROP_SIZE, Math.min(canvasSize.height - oy, oh + dy));
-          break;
+      const newCropArea = cropActions.updateDrag(x, y, editorState.canvasSize);
+      if (newCropArea) {
+        editorActions.setCropArea(newCropArea);
       }
-
-      setCropArea({ x: newX, y: newY, width: newW, height: newH });
     },
-    [activeHandle, dragStart, cropMode, cropArea, canvasSize, getHandle, getCursor]
+    [cropState.activeHandle, editorState.cropMode, editorState.cropArea, editorState.canvasSize, cropActions, editorActions]
   );
 
   const handleMouseUp = useCallback(() => {
-    setActiveHandle(null);
-  }, []);
-
-  const handleRotateLeft = useCallback(() => {
-    setRotation((prev) => (prev - 90 + 360) % 360);
-    setCropArea(null);
-  }, []);
-
-  const handleRotateRight = useCallback(() => {
-    setRotation((prev) => (prev + 90) % 360);
-    setCropArea(null);
-  }, []);
-
-  const handleToggleCrop = useCallback(() => {
-    if (!cropMode && canvasSize.width > 0 && canvasSize.height > 0) {
-      const margin = 0.1;
-      setCropArea({
-        x: canvasSize.width * margin,
-        y: canvasSize.height * margin,
-        width: canvasSize.width * (1 - margin * 2),
-        height: canvasSize.height * (1 - margin * 2),
-      });
-      setCropMode(true);
-    } else {
-      setCropMode(false);
-      setCropArea(null);
-    }
-  }, [cropMode, canvasSize]);
+    cropActions.endDrag();
+  }, [cropActions]);
 
   const handleSave = useCallback(async () => {
-    if (!image) return;
+    if (!editorState.image) return;
 
     try {
-      const blob = await exportEditedImage(image, rotation, cropArea, scale);
+      const blob = await exportEditedImage(
+        editorState.image,
+        editorState.rotation,
+        editorState.cropArea,
+        editorState.scale
+      );
       onSave(blob);
       onClose();
     } catch (error) {
       console.error("Failed to export image:", error);
     }
-  }, [image, rotation, cropArea, scale, onSave, onClose]);
-
-  const handleReset = useCallback(() => {
-    setRotation(0);
-    setCropArea(null);
-    setCropMode(false);
-  }, []);
-
-  const hasChanges = rotation !== 0 || cropArea !== null;
+  }, [editorState.image, editorState.rotation, editorState.cropArea, editorState.scale, onSave, onClose]);
 
   return (
     <Dialog.Root open={!!imageUrl} onOpenChange={(open) => !open && onClose()}>
@@ -313,41 +149,16 @@ export default function ImageEditorModal({
               />
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <button
-                onClick={handleRotateLeft}
-                className="flex items-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
-              >
-                <ArrowUturnLeftIcon className="h-4 w-4" />
-                Rotate Left
-              </button>
-              <button
-                onClick={handleRotateRight}
-                className="flex items-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
-              >
-                <ArrowUturnRightIcon className="h-4 w-4" />
-                Rotate Right
-              </button>
-              <button
-                onClick={handleToggleCrop}
-                className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                  cropMode
-                    ? "border-accent bg-background-tertiary text-accent-strong"
-                    : "border-border-strong text-foreground-muted hover:bg-interactive-hover"
-                }`}
-              >
-                <ScissorsIcon className="h-4 w-4" />
-                {cropMode ? "Cancel Crop" : "Crop"}
-              </button>
-              {hasChanges && (
-                <button
-                  onClick={handleReset}
-                  className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
+            <EditorToolbar
+              cropMode={editorState.cropMode}
+              hasChanges={editorState.hasChanges}
+              onRotateLeft={editorActions.rotateLeft}
+              onRotateRight={editorActions.rotateRight}
+              onEnterCrop={editorActions.enterCrop}
+              onApplyCrop={editorActions.applyCrop}
+              onCancelCrop={editorActions.cancelCrop}
+              onReset={editorActions.reset}
+            />
           </div>
 
           <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
