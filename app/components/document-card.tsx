@@ -54,13 +54,13 @@ export default function DocumentCard({
   return (
     <div
       onClick={handleCardClick}
-      className={`group flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-white transition-shadow hover:shadow-md dark:bg-zinc-900 ${
+      className={`group flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-background-secondary transition-shadow hover:shadow-md ${
         selected
-          ? "border-blue-500 ring-2 ring-blue-500"
-          : "border-zinc-200 dark:border-zinc-800"
+          ? "border-accent ring-2 ring-accent"
+          : "border-border"
       }`}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+      <div className="relative aspect-[4/3] overflow-hidden bg-background-tertiary">
         {thumbnailUrl && (
           <img
             src={thumbnailUrl}
@@ -76,7 +76,7 @@ export default function DocumentCard({
             checked={selected}
             onChange={handleCheckboxChange}
             onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 cursor-pointer rounded border-zinc-300 bg-white text-blue-500 focus:ring-blue-500"
+            className="h-5 w-5 cursor-pointer rounded border-border-strong bg-background-secondary text-accent focus:ring-accent"
           />
         </div>
 
@@ -92,13 +92,13 @@ export default function DocumentCard({
         )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
-        <h3 className="truncate font-medium text-zinc-900 dark:text-zinc-100">
+        <h3 className="truncate font-medium text-foreground">
           {doc.title}
         </h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-foreground-muted">
           {formatDate(doc.uploadedAt)}
         </p>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-foreground-muted">
           {formatFileSize(doc.size)}
         </p>
       </div>

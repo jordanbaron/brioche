@@ -6,9 +6,9 @@ interface StatusBadgeProps {
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
   const styles = {
-    processed: "bg-green-500 text-white",
-    processing: "bg-yellow-500 text-white",
-    pending: "bg-zinc-500 text-white",
+    processed: "bg-green text-white",
+    processing: "bg-yellow text-foreground",
+    pending: "bg-foreground-faint text-white",
   };
 
   const labels = {

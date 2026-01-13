@@ -66,12 +66,12 @@ export default function Dashboard() {
   const allSelected = hasDocuments && selectedIds.size === documents.length;
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 font-sans dark:bg-zinc-950">
+    <div className="flex min-h-screen flex-col bg-background font-sans">
       <Header />
 
       <main className="flex-1 p-6">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-lg font-semibold text-foreground">
             Your Documents
           </h2>
 
@@ -81,7 +81,7 @@ export default function Dashboard() {
                 <>
                   <button
                     onClick={allSelected ? handleDeselectAll : handleSelectAll}
-                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="rounded-lg border border-border-strong px-3 py-1.5 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
                   >
                     {allSelected ? "Deselect All" : "Select All"}
                   </button>
@@ -94,7 +94,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={handleCancelSelection}
-                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    className="rounded-lg border border-border-strong px-3 py-1.5 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
                   >
                     Cancel
                   </button>
@@ -102,7 +102,7 @@ export default function Dashboard() {
               ) : (
                 <button
                   onClick={() => setSelectionMode(true)}
-                  className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="rounded-lg border border-border-strong px-3 py-1.5 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
                 >
                   Select
                 </button>
@@ -113,15 +113,15 @@ export default function Dashboard() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Spinner className="h-6 w-6 text-zinc-400" />
+            <Spinner className="h-6 w-6 text-foreground-faint" />
           </div>
         ) : documents?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <DocumentTextIcon className="mb-4 h-12 w-12 text-zinc-300 dark:text-zinc-700" strokeWidth={1.5} />
-            <p className="text-zinc-500 dark:text-zinc-400">No documents yet</p>
+            <DocumentTextIcon className="mb-4 h-12 w-12 text-foreground-faint" strokeWidth={1.5} />
+            <p className="text-foreground-muted">No documents yet</p>
             <Link
               href="/"
-              className="mt-4 text-sm font-medium text-blue-500 hover:text-blue-600"
+              className="mt-4 text-sm font-medium text-accent-strong hover:text-accent"
             >
               Upload your first document
             </Link>

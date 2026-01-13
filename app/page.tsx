@@ -9,7 +9,7 @@ export default function Home() {
   const [markdown, setMarkdown] = useState("");
 
   return (
-    <div className="flex min-h-screen max-h-screen overflow-hidden flex-col bg-zinc-50 font-sans dark:bg-zinc-950">
+    <div className="flex min-h-screen max-h-screen overflow-hidden flex-col bg-background font-sans">
       <Header />
       <main className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-hidden p-6 md:grid-cols-2">
         <DocumentUpload

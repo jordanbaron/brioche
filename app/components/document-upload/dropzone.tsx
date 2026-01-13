@@ -43,8 +43,8 @@ export default function Dropzone({ onFiles }: DropzoneProps) {
     <div
       className={`relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed p-8 transition-colors ${
         dragActive
-          ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-          : "border-zinc-300 hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-600"
+          ? "border-accent bg-background-tertiary"
+          : "border-border-strong hover:border-foreground-faint"
       }`}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
@@ -58,12 +58,12 @@ export default function Dropzone({ onFiles }: DropzoneProps) {
           multiple
           onChange={handleInputChange}
         />
-        <div className="flex flex-col items-center gap-2 text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-col items-center gap-2 text-foreground-muted">
           <CloudArrowUpIcon className="h-12 w-12" strokeWidth={1.5} />
           <span className="text-sm">
             Drop images here, or click to browse
           </span>
-          <span className="text-xs text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs text-foreground-faint">
             Multiple files supported
           </span>
         </div>

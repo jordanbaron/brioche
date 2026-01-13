@@ -283,14 +283,14 @@ export default function ImageEditorModal({
     <Dialog.Root open={!!imageUrl} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed inset-4 flex flex-col overflow-hidden rounded-xl bg-zinc-50 shadow-xl md:inset-8 dark:bg-zinc-950">
-          <div className="flex items-center justify-between border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-            <Dialog.Title className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+        <Dialog.Content className="fixed inset-4 flex flex-col overflow-hidden rounded-xl bg-background shadow-xl md:inset-8">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <Dialog.Title className="text-lg font-semibold text-foreground">
               Edit Image
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-interactive-hover hover:text-foreground"
                 aria-label="Close"
               >
                 <XMarkIcon className="h-5 w-5" />
@@ -316,14 +316,14 @@ export default function ImageEditorModal({
             <div className="flex flex-wrap items-center justify-center gap-4">
               <button
                 onClick={handleRotateLeft}
-                className="flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="flex items-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
               >
                 <ArrowUturnLeftIcon className="h-4 w-4" />
                 Rotate Left
               </button>
               <button
                 onClick={handleRotateRight}
-                className="flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="flex items-center gap-2 rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
               >
                 <ArrowUturnRightIcon className="h-4 w-4" />
                 Rotate Right
@@ -332,8 +332,8 @@ export default function ImageEditorModal({
                 onClick={handleToggleCrop}
                 className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                   cropMode
-                    ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                    : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    ? "border-accent bg-background-tertiary text-accent-strong"
+                    : "border-border-strong text-foreground-muted hover:bg-interactive-hover"
                 }`}
               >
                 <ScissorsIcon className="h-4 w-4" />
@@ -342,7 +342,7 @@ export default function ImageEditorModal({
               {hasChanges && (
                 <button
                   onClick={handleReset}
-                  className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
                 >
                   Reset
                 </button>
@@ -350,16 +350,16 @@ export default function ImageEditorModal({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-zinc-200 px-6 py-4 dark:border-zinc-800">
+          <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
             <button
               onClick={onClose}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="rounded-lg bg-accent-strong px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent"
             >
               Save Changes
             </button>

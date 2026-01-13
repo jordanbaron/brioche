@@ -119,7 +119,7 @@ export default function DocumentUpload({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+      <h2 className="text-lg font-semibold text-foreground">
         Upload Document
       </h2>
 
@@ -140,13 +140,13 @@ export default function DocumentUpload({
         <div className="flex gap-2">
           <button
             onClick={handleProcess}
-            className="flex-1 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="flex-1 rounded-lg bg-accent-strong px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent"
           >
             Process with OCR
           </button>
           <button
             onClick={handleClear}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
           >
             Clear All
           </button>
@@ -156,14 +156,14 @@ export default function DocumentUpload({
       {images.length > 0 && !isPending && !isProcessing && (
         <button
           onClick={handleClear}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-border-strong px-4 py-2 text-sm font-medium text-foreground-muted transition-colors hover:bg-interactive-hover"
         >
           Clear All
         </button>
       )}
 
       {isProcessing && (
-        <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="flex items-center gap-2 text-sm text-foreground-muted">
           <Spinner />
           Processing with Mistral OCR...
         </div>

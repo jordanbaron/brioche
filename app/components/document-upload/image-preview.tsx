@@ -24,7 +24,7 @@ export default function ImagePreview({
   const showArrows = totalImages > 1;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-zinc-300 p-2 dark:border-zinc-700">
+    <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border-strong p-2">
       <img
         src={image.previewUrl}
         alt="Preview"
