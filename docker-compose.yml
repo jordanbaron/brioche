@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  brioche:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - GOOGLE_GENERATIVE_API_KEY=${GOOGLE_GENERATIVE_API_KEY}
+    restart: unless-stopped
