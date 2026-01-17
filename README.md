@@ -1,5 +1,5 @@
 # Brioche
-A self-hosted tool for converting documents into markdown via Gemini's OCR capabilities.
+A tool for converting documents into markdown via Gemini's OCR capabilities.
 
 ## Reasoning
 I will start by saying yes this was mostly written by AI and has a few bugs. I enjoy using AI for creating tools that I want but don't feel like writing all myself. Are there alternatives? Yes. Is it cooler to have a tool of your own? Also yes. Shoutout Claude!
