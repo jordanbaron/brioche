@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Document } from "../lib/db";
 
@@ -6,21 +7,21 @@ export function useDocuments() {
     db.documents.orderBy("uploadedAt").reverse().toArray()
   );
 
-  const deleteDocument = async (id: number) => {
+  const deleteDocument = useCallback(async (id: number) => {
     await db.documents.delete(id);
-  };
+  }, []);
 
-  const deleteDocuments = async (ids: number[]) => {
+  const deleteDocuments = useCallback(async (ids: number[]) => {
     await db.documents.bulkDelete(ids);
-  };
+  }, []);
 
-  const getDocument = async (id: number) => {
+  const getDocument = useCallback(async (id: number) => {
     return await db.documents.get(id);
-  };
+  }, []);
 
-  const updateMarkdown = async (id: number, markdown: string) => {
+  const updateMarkdown = useCallback(async (id: number, markdown: string) => {
     await db.documents.update(id, { markdown });
-  };
+  }, []);
 
   return {
     documents,

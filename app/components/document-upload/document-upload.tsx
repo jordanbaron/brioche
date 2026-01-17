@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import { useOcr, type OcrResult } from "../../hooks/use-ocr";
 import Spinner from "../spinner";
@@ -21,6 +21,13 @@ export default function DocumentUpload({
   const [images, setImages] = useImmer<ImageItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [editingImageUrl, setEditingImageUrl] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  // Use ref pattern to avoid effect re-runs when callback reference changes
+  const onMarkdownChangeRef = useRef(onMarkdownChange);
+  useEffect(() => {
+    onMarkdownChangeRef.current = onMarkdownChange;
+  });
 
   const currentImage = images[currentIndex];
 
@@ -45,15 +52,16 @@ export default function DocumentUpload({
 
   useEffect(() => {
     if (currentImage?.markdown) {
-      onMarkdownChange?.(currentImage.markdown);
+      onMarkdownChangeRef.current?.(currentImage.markdown);
     } else {
-      onMarkdownChange?.("");
+      onMarkdownChangeRef.current?.("");
     }
-  }, [currentIndex, currentImage, onMarkdownChange]);
+  }, [currentIndex, currentImage]);
 
   const handleFiles = useCallback(
     (files: FileList) => {
       const validFiles: ImageItem[] = [];
+      setFileError(null);
 
       Array.from(files).forEach((file) => {
         if (file.type.startsWith("image/")) {
@@ -63,7 +71,7 @@ export default function DocumentUpload({
       });
 
       if (validFiles.length === 0) {
-        alert("Please upload image files");
+        setFileError("Please upload image files");
         return;
       }
 
@@ -83,8 +91,9 @@ export default function DocumentUpload({
     setImages([]);
     setCurrentIndex(0);
     ocr.reset();
-    onMarkdownChange?.("");
-  }, [images, ocr, onMarkdownChange, setImages]);
+    setFileError(null);
+    onMarkdownChangeRef.current?.("");
+  }, [images, ocr, setImages]);
 
   const handlePrev = useCallback(() => {
     setCurrentIndex((prev) => Math.max(0, prev - 1));
@@ -188,6 +197,10 @@ export default function DocumentUpload({
 
       {ocr.isError && (
         <div className="text-sm text-red-500">Error: {ocr.error?.message}</div>
+      )}
+
+      {fileError && (
+        <div className="text-sm text-red-500">{fileError}</div>
       )}
 
       <ImageEditorModal

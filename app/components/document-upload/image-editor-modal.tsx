@@ -23,7 +23,7 @@ export default function ImageEditorModal({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { state: editorState, actions: editorActions, cropScaleRef } = useImageEditor();
+  const { state: editorState, actions: editorActions } = useImageEditor();
   const { state: cropState, actions: cropActions } = useCropInteraction();
 
   // Load image when URL changes
@@ -47,7 +47,7 @@ export default function ImageEditorModal({
     rotation: editorState.rotation,
     cropArea: editorState.cropArea,
     cropMode: editorState.cropMode,
-    cropScale: cropScaleRef.current,
+    cropScale: editorState.cropScale,
     onScaleChange: editorActions.setScale,
     onCanvasSizeChange: editorActions.setCanvasSize,
   });

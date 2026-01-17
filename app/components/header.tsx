@@ -19,6 +19,7 @@ export default function Header() {
       <nav className="flex gap-4">
         <Link
           href="/"
+          aria-current={pathname === "/" ? "page" : undefined}
           className={`text-sm font-medium transition-colors ${
             pathname === "/"
               ? "text-foreground"
@@ -29,6 +30,7 @@ export default function Header() {
         </Link>
         <Link
           href="/dashboard"
+          aria-current={pathname === "/dashboard" ? "page" : undefined}
           className={`text-sm font-medium transition-colors ${
             pathname === "/dashboard"
               ? "text-foreground"

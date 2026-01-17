@@ -4,7 +4,12 @@ interface SpinnerProps {
 
 export default function Spinner({ className = "h-4 w-4" }: SpinnerProps) {
   return (
-    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24">
+    <svg
+      className={`animate-spin ${className}`}
+      viewBox="0 0 24 24"
+      role="status"
+      aria-label="Loading"
+    >
       <circle
         className="opacity-25"
         cx="12"

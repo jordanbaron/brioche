@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Document } from "../lib/db";
 import { formatDate, formatFileSize } from "../lib/utils";
+import ConfirmDialog from "./confirm-dialog";
 
 interface DocumentCardProps {
   doc: Document;
@@ -22,30 +23,39 @@ export default function DocumentCard({
   selected = false,
   onSelect,
 }: DocumentCardProps) {
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  // Create and manage thumbnail URL with proper cleanup
+  const thumbnailUrl = useMemo(() => URL.createObjectURL(doc.blob), [doc.blob]);
 
   useEffect(() => {
-    const url = URL.createObjectURL(doc.blob);
-    setThumbnailUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [doc.blob]);
+    return () => URL.revokeObjectURL(thumbnailUrl);
+  }, [thumbnailUrl]);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm(`Delete "${doc.title}"?`)) {
-      onDelete(doc.id!);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (doc.id !== undefined) {
+      onDelete(doc.id);
     }
   };
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
-    onSelect?.(doc.id!, e.target.checked);
+    if (doc.id !== undefined) {
+      onSelect?.(doc.id, e.target.checked);
+    }
   };
 
   const handleCardClick = () => {
     if (selectable || selected) {
-      onSelect?.(doc.id!, !selected);
+      if (doc.id !== undefined) {
+        onSelect?.(doc.id, !selected);
+      }
     } else {
       onClick?.();
     }
@@ -61,13 +71,11 @@ export default function DocumentCard({
       }`}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-background-tertiary">
-        {thumbnailUrl && (
-          <img
-            src={thumbnailUrl}
-            alt={doc.title}
-            className="h-full w-full object-cover"
-          />
-        )}
+        <img
+          src={thumbnailUrl}
+          alt={doc.title}
+          className="h-full w-full object-cover"
+        />
 
         {/* Checkbox - always available on hover, always visible when selected */}
         <div className={`absolute left-2 top-2 ${selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"} transition-opacity`}>
@@ -102,6 +110,17 @@ export default function DocumentCard({
           {formatFileSize(doc.size)}
         </p>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title="Delete Document"
+        description={`Are you sure you want to delete "${doc.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        variant="danger"
+      />
     </div>
   );
 }

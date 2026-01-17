@@ -3,6 +3,17 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILES = 20;
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/bmp",
+  "image/tiff",
+];
+
 const responseSchema = z.object({
   pages: z.array(
     z.object({
@@ -35,8 +46,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
+    if (files.length > MAX_FILES) {
+      return NextResponse.json(
+        { error: `Maximum ${MAX_FILES} files allowed` },
+        { status: 400 }
+      );
+    }
+
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `File "${file.name}" exceeds 10MB limit` },
+          { status: 400 }
+        );
+      }
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: `Invalid file type "${file.type}". Allowed: JPEG, PNG, WebP, GIF, BMP, TIFF` },
+          { status: 400 }
+        );
+      }
+    }
+
     const imageContents = await Promise.all(
-      files.map(async (file, index) => {
+      files.map(async (file) => {
         const bytes = new Uint8Array(await file.arrayBuffer());
         const mimeType = file.type || "image/jpeg";
         return {

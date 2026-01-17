@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { type CropArea } from "../../../lib/canvas-utils";
 
 export interface ImageEditorState {
@@ -32,7 +32,7 @@ export function useImageEditor() {
   const [cropMode, setCropMode] = useState(false);
   const [scale, setScale] = useState(1);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  const cropScaleRef = useRef(1);
+  const [cropScale, setCropScale] = useState(1);
 
   const rotateLeft = useCallback(() => {
     setRotation((prev) => (prev - 90 + 360) % 360);
@@ -46,7 +46,7 @@ export function useImageEditor() {
 
   const enterCrop = useCallback(() => {
     if (canvasSize.width > 0 && canvasSize.height > 0) {
-      cropScaleRef.current = scale;
+      setCropScale(scale);
       const margin = 0.1;
       setCropArea({
         x: canvasSize.width * margin,
@@ -83,7 +83,7 @@ export function useImageEditor() {
       cropMode,
       scale,
       canvasSize,
-      cropScale: cropScaleRef.current,
+      cropScale,
       hasChanges,
     } as ImageEditorState,
     actions: {
@@ -98,6 +98,5 @@ export function useImageEditor() {
       cancelCrop,
       reset,
     } as ImageEditorActions,
-    cropScaleRef,
   };
 }

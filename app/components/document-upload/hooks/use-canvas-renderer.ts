@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import {
   type CropArea,
   drawRotatedImage,
@@ -30,6 +30,14 @@ export function useCanvasRenderer({
   onScaleChange,
   onCanvasSizeChange,
 }: UseCanvasRendererOptions): void {
+  // Use ref pattern to avoid effect re-runs when callback references change
+  const onScaleChangeRef = useRef(onScaleChange);
+  const onCanvasSizeChangeRef = useRef(onCanvasSizeChange);
+  useEffect(() => {
+    onScaleChangeRef.current = onScaleChange;
+    onCanvasSizeChangeRef.current = onCanvasSizeChange;
+  });
+
   useEffect(() => {
     if (!image || !canvasRef.current || !containerRef.current) return;
 
@@ -65,7 +73,7 @@ export function useCanvasRenderer({
 
       canvas.width = srcW * displayScale;
       canvas.height = srcH * displayScale;
-      onCanvasSizeChange({ width: canvas.width, height: canvas.height });
+      onCanvasSizeChangeRef.current({ width: canvas.width, height: canvas.height });
 
       // Create temp canvas with full rotated image at original size
       const tempCanvas = document.createElement("canvas");
@@ -98,13 +106,13 @@ export function useCanvasRenderer({
         containerRect.width - 32,
         containerRect.height - 32
       );
-      onScaleChange(newScale);
+      onScaleChangeRef.current(newScale);
 
       const newCanvasWidth = imgWidth * newScale;
       const newCanvasHeight = imgHeight * newScale;
       canvas.width = newCanvasWidth;
       canvas.height = newCanvasHeight;
-      onCanvasSizeChange({ width: newCanvasWidth, height: newCanvasHeight });
+      onCanvasSizeChangeRef.current({ width: newCanvasWidth, height: newCanvasHeight });
 
       drawRotatedImage(ctx, image, rotation, newScale);
 
@@ -120,7 +128,5 @@ export function useCanvasRenderer({
     cropScale,
     canvasRef,
     containerRef,
-    onScaleChange,
-    onCanvasSizeChange,
   ]);
 }

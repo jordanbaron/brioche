@@ -6,6 +6,7 @@ import { DocumentTextIcon } from "@heroicons/react/24/outline";
 import Header from "../components/header";
 import DocumentCard from "../components/document-card";
 import DocumentViewerModal from "../components/document-viewer-modal";
+import ConfirmDialog from "../components/confirm-dialog";
 import Spinner from "../components/spinner";
 import { useDocuments, type Document } from "../hooks/use-documents";
 
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const handleSelect = (id: number, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -37,7 +39,10 @@ export default function Dashboard() {
 
   const handleSelectAll = () => {
     if (documents) {
-      setSelectedIds(new Set(documents.map((d) => d.id!)));
+      const validIds = documents
+        .map((d) => d.id)
+        .filter((id): id is number => id !== undefined);
+      setSelectedIds(new Set(validIds));
     }
   };
 
@@ -48,13 +53,13 @@ export default function Dashboard() {
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
+    setConfirmDeleteOpen(true);
+  };
 
-    const count = selectedIds.size;
-    if (confirm(`Delete ${count} document${count > 1 ? "s" : ""}?`)) {
-      await deleteDocuments(Array.from(selectedIds));
-      setSelectedIds(new Set());
-      setSelectionMode(false);
-    }
+  const handleConfirmDelete = async () => {
+    await deleteDocuments(Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setSelectionMode(false);
   };
 
   const handleCancelSelection = () => {
@@ -135,7 +140,7 @@ export default function Dashboard() {
                 onDelete={deleteDocument}
                 onClick={() => setSelectedDoc(doc)}
                 selectable={selectionMode}
-                selected={selectedIds.has(doc.id!)}
+                selected={doc.id !== undefined && selectedIds.has(doc.id)}
                 onSelect={handleSelect}
               />
             ))}
@@ -146,6 +151,17 @@ export default function Dashboard() {
       <DocumentViewerModal
         doc={selectedDoc}
         onClose={() => setSelectedDoc(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title="Delete Documents"
+        description={`Are you sure you want to delete ${selectedIds.size} document${selectedIds.size > 1 ? "s" : ""}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        variant="danger"
       />
     </div>
   );

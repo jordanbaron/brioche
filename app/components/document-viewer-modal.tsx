@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { Document } from "../lib/db";
@@ -16,17 +16,20 @@ export default function DocumentViewerModal({
   doc,
   onClose,
 }: DocumentViewerModalProps) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { updateMarkdown } = useDocuments();
 
+  // Create and manage image URL with proper cleanup
+  const blob = doc?.blob;
+  const imageUrl = useMemo(
+    () => (blob ? URL.createObjectURL(blob) : null),
+    [blob]
+  );
+
   useEffect(() => {
-    if (doc?.blob) {
-      const url = URL.createObjectURL(doc.blob);
-      setImageUrl(url);
-      return () => URL.revokeObjectURL(url);
+    if (imageUrl) {
+      return () => URL.revokeObjectURL(imageUrl);
     }
-    setImageUrl(null);
-  }, [doc?.blob]);
+  }, [imageUrl]);
 
   const handleMarkdownChange = async (newMarkdown: string) => {
     if (doc?.id) {
